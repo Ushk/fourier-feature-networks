@@ -74,7 +74,8 @@ def train_model(network_size, learning_rate, iters, B, train_data, test_data, de
     train_psnrs = []
     test_psnrs = []
     xs = []
-    for i in tqdm(range(iters), desc='train iter', leave=False):
+    for i in range(iters):
+    #for i in tqdm(range(iters), desc='train iter', leave=False):
         model.train()
         optim.zero_grad()
 
@@ -92,11 +93,15 @@ def train_model(network_size, learning_rate, iters, B, train_data, test_data, de
             model.eval()
             with torch.no_grad():
                 v_o = model(input_mapping(test_data[0], B))
-                v_loss = loss_fn(v_o, test_data[1])
-                v_psnrs = - 10 * torch.log10(2 * v_loss).item()
-                test_psnrs.append(v_psnrs)
-                xs.append(i)
-                torchvision.utils.save_image(v_o.permute(0, 3, 1, 2), f"imgs/{i}_{v_loss.item():.6f}.jpeg")
+                save_img = torch.zeros((1,3,256,256)).to(device)
+                test_inds = (test_data[0]*255).round().long()
+                save_img[0, :, test_inds[:,0], test_inds[:,1]] = v_o.T
+                
+                #v_loss = loss_fn(v_o, test_data[1])
+                #v_psnrs = - 10 * torch.log10(2 * v_loss).item()
+                #test_psnrs.append(v_psnrs)
+                #xs.append(i)
+                torchvision.utils.save_image(save_img, f"imgs/{i}.jpeg")
             # print(f"---[steps: {i}]: valid loss: {v_loss.item():.6f}")
 
     return {
